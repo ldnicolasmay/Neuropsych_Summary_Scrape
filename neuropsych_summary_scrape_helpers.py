@@ -1,0 +1,299 @@
+# neuropsych_summary_scrape_helpers.py
+
+import logging
+import requests
+import pandas as pd
+from re import match, search
+
+
+def return_col_row_of_val(df_to_search, search_str):
+    """
+    Return row and column indices (as 2-tuple of integers) of `search_str` within dataframe `df_to_search`
+
+    :param df_to_search:
+    :param search_str:
+    :return:
+    """
+    # loop over each df column
+    for col_idx, series in df_to_search.items():
+        # loop over each column's row
+        for row_idx, value in series.items():
+            # search for the string, return the indices early if found
+            if pd.notna(value) and match(search_str, value):
+                return row_idx, col_idx
+    # else return None-None tuple
+    return None, None
+
+
+def convert_x_to_dtype(raw_value, type_str, anchor, path):
+    """
+
+    :param raw_value:
+    :param type_str:
+    :param anchor:
+    :param path:
+    :return:
+    """
+    # Determine coercion function
+    if type_str == "int":
+        func = int
+    elif type_str == "float":
+        func = float
+    elif type_str == "str":
+        func = str
+    else:
+        raise ValueError(f"Unexpected type string \"{type_str}\" for `{anchor}` in parse_map.json")
+
+    # Apply coercion function to raw_value
+    try:
+        value = func(raw_value)
+    except ValueError as e:
+        value = None
+        logging.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
+
+    return value
+
+
+def extract_dir_visit_num(dir_entry):
+    """
+
+    :param dir_entry:
+    :return:
+    """
+    visit_match = search(r'.*Visit (\d+).*', dir_entry.path)
+    visit_str = visit_match.group(1)
+    try:
+        visit_int = int(visit_str)
+    except ValueError as e:
+        visit_int = None
+        print(e)
+
+    return visit_int
+
+
+def extract_dir_ummap_id(dir_entry, electra_dir_entry):
+    """
+
+    :param dir_entry:
+    :param electra_dir_entry:
+    :return:
+    """
+    if not electra_dir_entry:
+        id_match = search(r'.*/(\d+).[Ss]cor', dir_entry.path)
+        id_str = id_match.group(1)
+        try:
+            id_int = int(id_str)
+        except ValueError as e:
+            id_int = None
+            logging.warning(e)
+    else:
+        id_match = search(r'.*/KG\d{6} - (\d{4})/KG\d{6}_(\d{4}).*', dir_entry.path)
+        id_str_1 = id_match.group(1)
+        id_str_2 = id_match.group(2)
+        if id_str_1 == id_str_2:
+            id_str = id_str_1
+            try:
+                id_int = int(id_str)
+            except ValueError as e:
+                id_int = None
+                logging.warning(e)
+        else:
+            raise AssertionError(f"UMMAP IDs from {dir_entry.path} don't match")
+    ummap_id = normalize_ummap_id(id_int)
+
+    return ummap_id
+
+
+def extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, electra_df):
+    """
+
+    :param dir_ummap_id:
+    :param dir_visit_num:
+    :param electra_dir_entry:
+    :param electra_df:
+    :return:
+    """
+    if not electra_dir_entry:
+        redcap_event_name_str = f"visit_{dir_visit_num}_arm_1"
+    else:
+        ummap_visit_values = \
+            electra_df[
+                (electra_df.ptid == dir_ummap_id) &
+                (electra_df.redcap_event_name == f"sv{dir_visit_num}_arm_1")
+            ].ummap_visit_number.values
+        if ummap_visit_values:
+            ummap_visit_value = ummap_visit_values[0]
+            redcap_event_name_str = f"visit_{ummap_visit_value}_arm_1"
+        else:
+            redcap_event_name_str = None
+
+    return redcap_event_name_str
+
+
+def build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
+    """
+    Build record row for dataframe of records for eventual REDCap import
+
+    :param summ_sheet_df:
+    :param parse_dict:
+    :param dir_entry:
+    :param electra_df:
+    :return:
+    """
+    row_dict = {}
+    for raw_field, spec_dict in parse_dict.items():
+        row_idx, col_idx = return_col_row_of_val(summ_sheet_df, spec_dict['anchor'])
+        if row_idx is not None:
+            raw_value = summ_sheet_df.loc[row_idx + spec_dict['row_diff'], col_idx + spec_dict['col_diff']]
+            if pd.isna(raw_value) or raw_value.strip().upper() in ["", "NA", "N/A"]:
+                value = None
+            else:
+                value = convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], dir_entry.path)
+            row_dict[raw_field] = value
+
+    electra_dir_entry = True if match(".*ELECTRA.*", dir_entry.path) else False
+    dir_ummap_id = extract_dir_ummap_id(dir_entry, electra_dir_entry)
+    dir_visit_num = extract_dir_visit_num(dir_entry)
+    redcap_event_name = extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, electra_df)
+    row_dict['redcap_event_name'] = redcap_event_name
+
+    return row_dict
+
+
+def build_accum_df(dir_entries_list, parse_dict, electra_df):
+    """
+    Build dataframe of records for eventual REDCap import
+
+    :param dir_entries_list:
+    :param parse_dict:
+    :param electra_df:
+    :return:
+    """
+    # build empty dataframe
+    accum_df = pd.DataFrame(data=None, index=None, columns=parse_dict.keys())
+
+    # loop over summary sheet DirEntries and process
+    for dir_entry in dir_entries_list:
+        try:
+            summ_sheet_df = pd.read_excel(dir_entry.path, sheet_name=0, header=None, dtype=str)
+        except:
+            summ_sheet_df = pd.DataFrame(data=None)
+            logging.warning(f"Cannot process \"{dir_entry.path}\"")
+        if not summ_sheet_df.empty:
+            row_dict = build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df)
+            accum_df = accum_df.append(row_dict, ignore_index=True)
+            logging.info(f"Processed \"{dir_entry.path}\"")
+
+    return accum_df.dropna(axis="index", how="all")
+
+
+def normalize_ummap_id(id_):
+    """
+    Normalize UMMAP IDs
+
+    :param id_: UMMAP ID
+    :return: normalized UMMAP ID
+    """
+    id_str = str(id_)
+    if match(r'^UM\d{8}$', id_str):
+        return id_str
+    elif match(r'^\d{3,4}$', str(id_str)):
+        return "UM" + "0" * (8 - len(id_str)) + id_str
+    else:
+        raise Exception(f"UMMAP ID {id_str} doesn't conform to expected form")
+
+
+def add_prefix_to_fu_visits(df, cols, prefix):
+    """
+
+    :param df:
+    :param cols:
+    :param prefix:
+    :return:
+    """
+    df = df.copy(deep=True)
+    for col in cols:
+        df[prefix + col] = df.loc[df.redcap_event_name != "visit_1_arm_1", col]
+        df[col] = df.loc[df.redcap_event_name == "visit_1_arm_1", col]
+    return df
+
+
+def get_ivp_complete(df):
+    """
+
+    :param df:
+    :return:
+    """
+    ivp_complete = (df.ivp_a1_complete == "2") & \
+                   (df.ivp_a2_complete == "2") & \
+                   (df.ivp_a3_complete == "2") & \
+                   (df.ivp_a4_complete == "2") & \
+                   (df.ivp_a5_complete == "2") & \
+                   (df.ivp_b1_complete == "2") & \
+                   (df.ivp_b4_complete == "2") & \
+                   (df.ivp_b5_complete == "2") & \
+                   (df.ivp_b6_complete == "2") & \
+                   (df.ivp_b7_complete == "2") & \
+                   (df.ivp_b8_complete == "2") & \
+                   (df.ivp_b9_complete == "2") & \
+                   (df.ivp_d1_complete == "2") & \
+                   (df.ivp_d2_complete == "2")
+    return ivp_complete
+
+
+def get_fvp_complete(df):
+    """
+
+    :param df:
+    :return:
+    """
+    fvp_complete = (df.fvp_a1_complete == "2") & \
+                   (df.fvp_a2_complete == "2") & \
+                   (df.fvp_a3_complete == "2") & \
+                   (df.fvp_a4_complete == "2") & \
+                   (df.fvp_b1_complete == "2") & \
+                   (df.fvp_b4_complete == "2") & \
+                   (df.fvp_b5_complete == "2") & \
+                   (df.fvp_b6_complete == "2") & \
+                   (df.fvp_b7_complete == "2") & \
+                   (df.fvp_b8_complete == "2") & \
+                   (df.fvp_b9_complete == "2") & \
+                   (df.fvp_d1_complete == "2") & \
+                   (df.fvp_d2_complete == "2")
+    return fvp_complete
+
+
+def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, vp=True):
+    """
+
+    :param redcap_api_uri:
+    :param redcap_project_token:
+    :param fields_raw:
+    :param vp:
+    :return:
+    """
+    fields = ",".join(fields_raw)
+    # get data
+    request_dict = {
+        'token': redcap_project_token,
+        'content': 'record',
+        'format': 'json',
+        'type': 'flat',
+        'csvDelimiter': '',
+        'fields': fields,
+        'rawOrLabel': 'raw',
+        'rawOrLabelHeaders': 'raw',
+        'exportCheckboxLabel': 'false',
+        'exportSurveyFields': 'false',
+        'exportDataAccessGroups': 'false',
+        'returnFormat': 'json'
+    }
+    r = requests.post(redcap_api_uri, request_dict, verify=vp)
+    df_raw = pd.DataFrame.from_dict(r.json())
+
+    df_cln = df_raw[df_raw.ptid.str.match(r'^UM\d{8}$') &
+                    df_raw.redcap_event_name.str.match(r'^visit_\d+_arm_1$') &
+                    pd.notna(df_raw.form_date) &
+                    (df_raw.form_date != "")]
+
+    return df_cln

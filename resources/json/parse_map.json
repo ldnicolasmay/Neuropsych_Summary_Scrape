@@ -1,0 +1,119 @@
+{
+	"ptid": {"anchor": "UDS ID", "row_diff": 0, "col_diff": 1, "dtype": "str"},
+
+	"wtar_rs": {"anchor": "WTAR Total", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wtar_ss": {"anchor": "WTAR Total", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"wtarz": {"anchor": "WTAR Total", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"mocatots": {"anchor": "MoCA Total", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"mocaz": {"anchor": "MoCA Total", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"digforct": {"anchor": "Number Span FW Total", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"digforctz": {"anchor": "Number Span FW Total", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+	"digforsl": {"anchor": "Number Span FW Span", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"digforspanz": {"anchor": "Number Span FW Span", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"digbacct": {"anchor": "Number Span BW Total", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"digbacctz": {"anchor": "Number Span BW Total", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+	"digbacls": {"anchor": "Number Span BW Span", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"digbacspanz": {"anchor": "Number Span BW Span", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"traila_c2": {"anchor": "Trails A.*", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"trailarr_c2": {"anchor": "Trails A.*", "row_diff": 0, "col_diff": 3, "dtype": "int"},
+	"traila_c2z": {"anchor": "Trails A.*", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"jolostd": {"anchor": "JoLO Total Correct.*", "row_diff": 0, "col_diff": 2, "dtype": "float"},
+	"joloz": {"anchor": "JoLO Total Correct.*", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"udsbentc": {"anchor": "Benson Complex Figure Copy", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"udsbentcz": {"anchor": "Benson Complex Figure Copy", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"udsverfc": {"anchor": "Phonemic Fluency Total F Words", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"udsverfcz": {"anchor": "Phonemic Fluency Total F Words", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"udsverlc": {"anchor": "Phonemic Fluency Total L Words", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"udsverlcz": {"anchor": "Phonemic Fluency Total L Words", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"mintpcngz": {"anchor": "Phonemic Fluency Total F&L Words", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"cowa_twccfl": {"anchor": "COWA Total C,F,L Words.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"cowa_percent": {"anchor": "COWA Total C,F,L Words.*", "row_diff": 0, "col_diff": 2, "dtype": "float"},
+	"cowaz": {"anchor": "COWA Total C,F,L Words.*", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"animals_c2": {"anchor": "Category Fluency Animals", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"animals_c2z": {"anchor": "Category Fluency Animals", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"veg_c2": {"anchor": "Category Fluency Vegetables", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"veg_c2z": {"anchor": "Category Fluency Vegetables", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"minttots": {"anchor": "MINT Total", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"minttotsz": {"anchor": "MINT Total", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"craftvrs": {"anchor": "Craft Story 21 Immediate Verbatim", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"craftvrsz": {"anchor": "Craft Story 21 Immediate Verbatim", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"crafturs": {"anchor": "Craft Story 21 Immediate Paraphrase", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"craftparaz": {"anchor": "Craft Story 21 Immediate Paraphrase", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"craftdvr": {"anchor": "Craft Story 21 Delayed Verbatim", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"craftdvrz": {"anchor": "Craft Story 21 Delayed Verbatim", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"craftdre": {"anchor": "Craft Story 21 Delayed Paraphrase", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"craftdrez": {"anchor": "Craft Story 21 Delayed Paraphrase", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"hvlt_trr": {"anchor": "HVLT Total Recall", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"hvlt_trstd": {"anchor": "HVLT Total Recall", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"hvlt_trts": {"anchor": "HVLT Total Recall", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"hvlt_drr": {"anchor": "HVLT Delayed Recall", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"hvlt_drstd": {"anchor": "HVLT Delayed Recall", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"hvlt_drts": {"anchor": "HVLT Delayed Recall", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"hvlt_rr": {"anchor": "HVLT Retention .%.", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"hvlt_rrstd": {"anchor": "HVLT Retention .%.", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"hvlt_rts": {"anchor": "HVLT Retention .%.", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"hvlt_rdir": {"anchor": "(HVLT )?Recog Discrim Index", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"hvlt_rdirstd": {"anchor": "(HVLT )?Recog Discrim Index", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"hvlt_rdits": {"anchor": "(HVLT )?Recog Discrim Index", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"udsbentd": {"anchor": "Benson Figure Delayed Recall", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"udsbentdz": {"anchor": "Benson Figure Delayed Recall", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"trailb_c2": {"anchor": "Trails B", "row_diff": 0, "col_diff": 2, "dtype": "int"},
+	"trailbrr_c2": {"anchor": "Trails B", "row_diff": 0, "col_diff": 3, "dtype": "int"},
+	"trailb_c2z": {"anchor": "Trails B", "row_diff": 0, "col_diff": 4, "dtype": "float"},
+
+	"wcst_nosas": {"anchor": "Strategies Start.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_nosam": {"anchor": "Strategies Midpoint.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_nosae": {"anchor": "Strategies End.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_noes": {"anchor": "Strategies Erroneous", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_nocs": {"anchor": "Completed Sorts", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_te": {"anchor": "Total Errors", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_pe": {"anchor": "Perseverative Errors", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"wcst_ftmse": {"anchor": "Set Loss Errors", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+
+	"macq_score": {"anchor": "MAC-Q Score", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+
+	"npiq_score": {"anchor": "NPIQ Score", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+
+	"fas_score": {"anchor": "^FAS Score$|^Fxnl Activities Scale$", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+
+	"ftdworrc": {"anchor": "Word Reading--Reg.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdworic": {"anchor": "Word Reading--Irreg.*", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdsemmt": {"anchor": "Semantic Matching", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdsemsu": {"anchor": "Semantic Associates", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdanats": {"anchor": "NW Anagram", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdsenas": {"anchor": "Sentence Repetition", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdnounc": {"anchor": "N.V Naming--Nouns", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdverbc": {"anchor": "N.V Naming--Verbs", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"ftdreaas": {"anchor": "Sentence Reading", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+
+	"lbnsword": {"anchor": "Speed Attn Task - Word", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnscolr": {"anchor": "Speed Attn Task - Color", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnsclwd": {"anchor": "Speed Attn Task - Color-Word", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnpface": {"anchor": "Noise Pareidolia Task - Crct Yes", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnpnois": {"anchor": "Noise Pareidolia Task - Crct No", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnptcor": {"anchor": "Noise Pareidolia Task - Total Crct", "row_diff": 0, "col_diff": 1, "dtype": "int"},
+	"lbnppard": {"anchor": "Pareidolia (Illusory) Responses", "row_diff": 0, "col_diff": 1, "dtype": "int"}
+}

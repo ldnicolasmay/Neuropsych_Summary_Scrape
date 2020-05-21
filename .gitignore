@@ -1,0 +1,10 @@
+.idea/
+archive/
+venv/
+
+__pycache__/
+.DS_Store
+
+*.cfg
+*.csv
+*.iml

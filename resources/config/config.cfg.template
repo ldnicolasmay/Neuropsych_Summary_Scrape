@@ -1,0 +1,14 @@
+[base]
+root_path=/root/path/above/neuropsych_summary_sheets
+
+[ummap]
+subdirs_regex=^Clinical Core$|^Scoring \& Report Materials$|^Active Neuropsych Summaries$|^Visit \d.*$
+xlsx_regex=^\d{3,4}.[Ss]cor.+[Ss]ummary.*\d{4}.*\.xlsx$
+redcap_api_uri=[https://ummap-redcap-url/api/]
+redcap_project_token=[ummap_redcap_project_token]
+
+[electra]
+subdirs_regex=^ELECTRA$|^Have been printed by Data Core$|^ELECTRA Visit \d+$|^KG\d{6} - \d{4}$
+xlsx_regex=^KG\d{6}.\d{4}.Score.Summary.\d{4}\.xlsx$
+redcap_api_uri=[https://ummap-redcap-url/api/]
+redcap_project_token=[electra_redcap_project_token]

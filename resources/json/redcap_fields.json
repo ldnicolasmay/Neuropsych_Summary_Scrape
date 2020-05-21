@@ -1,0 +1,39 @@
+{
+  "ummap": [
+    "ptid",
+    "form_date",
+    "header_complete",
+    "ivp_a1_complete",
+    "ivp_a2_complete",
+    "ivp_a3_complete",
+    "ivp_a4_complete",
+    "ivp_a5_complete",
+    "ivp_b1_complete",
+    "ivp_b4_complete",
+    "ivp_b5_complete",
+    "ivp_b6_complete",
+    "ivp_b7_complete",
+    "ivp_b8_complete",
+    "ivp_b9_complete",
+    "ivp_d1_complete",
+    "ivp_d2_complete",
+    "fvp_a1_complete",
+    "fvp_a2_complete",
+    "fvp_a3_complete",
+    "fvp_a4_complete",
+    "fvp_b1_complete",
+    "fvp_b4_complete",
+    "fvp_b5_complete",
+    "fvp_b6_complete",
+    "fvp_b7_complete",
+    "fvp_b8_complete",
+    "fvp_b9_complete",
+    "fvp_d1_complete",
+    "fvp_d2_complete"
+  ],
+  "electra": [
+    "ptid",
+    "form_date",
+    "ummap_visit_number"
+  ]
+}
