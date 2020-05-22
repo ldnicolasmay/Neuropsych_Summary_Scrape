@@ -2,39 +2,41 @@
 
 ## Purpose
 
-The purpose of this project is to scrape the data from "Neuropsych Summary Sheets", which are spreadsheets used by Michigan ADRC Clinical Core to (1) quickly record and calculate key neuropsychological battery scores immediately after manual scoring and (2) consolidate those scores in one place for easy human readability.
+The purpose of this project is to scrape the data from "Neuropsych Summary Sheets", which are spreadsheets used by Michigan Alzheimer's Disease Center Clinical Core to (1) quickly record and calculate key neuropsychological battery scores immediately after manual scoring and (2) consolidate those scores in one place for easy human readability.
 
 ## Installation
 
 Python 3.6 or higher is required.
 
-* Clone the repo
+1. Clone the repo
 
-```shell script
-git clone git@git.umms.med.umich.edu:ldmay/neuropsych-summary-scrape.git
-```
+    ```shell script
+    git clone git@git.umms.med.umich.edu:ldmay/neuropsych-summary-scrape.git
+    ```
 
-* Copy `config.cfg.template` to `config.cfg`: 
+2. Copy `config.cfg.template` to `config.cfg`:
 
-```shell script
-cp config.cfg.template config.cfg
-```
+    ```shell script
+    cp config.cfg.template config.cfg
+    ```
 
-* Update `config.cfg` root path, regular expressions, and REDCap API credentials: 
+3. Update `config.cfg` root path, regular expressions, and REDCap API credentials: 
 
-```shell script
-vim config.cfg
-```
+    ```shell script
+    vim config.cfg
+    ```
 
-* Install necessary Python packages in your environment: 
+4. Install necessary Python packages in your environment: 
 
-```shell script
-python3 -m pip install -r requirements.txt
-```
+    ```shell script
+    python3 -m pip install -r requirements.txt
+    ```
 
 ## Use
 
 Everything should be preconfigured in the `config.cfg` and `.json` files.
+
+Simply run the script.
 
 ```shell script
 python3 neuropsych_summary_scrape.py
@@ -66,3 +68,5 @@ python3 neuropsych_summary_scrape.py
     b. Inner join completed-forms DataFrame and transformed DataFrame on `ptid` and `redcap_event_name`
     
 7. Write joined data to CSV for manual upload via REDCap web interface (TODO: Import records directly into REDCap via its API)
+
+![Neuropsych summary sheets pipeline](resources/img/NeuropsychSummarySheets.svg "Neuropsych Summary Sheets Pipeline")
