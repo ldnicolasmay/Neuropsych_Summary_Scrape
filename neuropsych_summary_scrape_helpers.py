@@ -297,3 +297,30 @@ def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, 
                     (df_raw.form_date != "")]
 
     return df_cln
+
+
+def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data, vp=True):
+    """
+
+    :param redcap_api_uri:
+    :param redcap_project_token:
+    :param importable_csv_data:
+    :param vp:
+    """
+    request_dict = {
+        'token': redcap_project_token,
+        'content': 'record',
+        'format': 'csv',
+        'type': 'flat',
+        'overwriteBehavior': 'normal',
+        'data': importable_csv_data,
+        'returnContent': 'count',
+        'returnFormat': 'json'
+    }
+    request_result = requests.post(redcap_api_uri, request_dict, verify=vp)
+    if request_result.status_code == 200:
+        logging.info(f"REDCap Import - Imported {request_result.json()['count']} records")
+    elif request_result.status_code == 400:
+        logging.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
+    else:
+        logging.error(f"REDCap Error - {request_result.reason} - {request_result.content}")

@@ -90,5 +90,13 @@ completed_forms_df = \
 importable_df = pd.merge(completed_forms_df, transformed_df, how='inner', on=['ptid', 'redcap_event_name'])
 
 # Write dataframe to CSV
-# TODO: Direct CSV file to resources/csv/ directory
-importable_df.to_csv(f"data/csv/neuropsych_scrape_data-{date.today().isoformat()}.csv", index=False)
+importable_csv_path = "data/csv"
+importable_csv_filename = f"neuropsych_scrape_data-{date.today().isoformat()}.csv"
+importable_df.to_csv(f"{importable_csv_path}/{importable_csv_filename}", index=False)
+
+# Import CSV records to REDCap
+with open(f"{importable_csv_path}/{importable_csv_filename}", "r") as importable_csv_data_file:
+    importable_csv_data = importable_csv_data_file.read()
+    import_redcap_data(config.get('ummap', 'redcap_api_uri'),
+                       config.get('ummap', 'redcap_project_token'),
+                       importable_csv_data, vp=False)

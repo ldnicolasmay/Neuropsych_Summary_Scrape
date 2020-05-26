@@ -8,7 +8,7 @@ The purpose of this project is to scrape the data from "Neuropsych Summary Sheet
 
 Python 3.6 or higher is required.
 
-1. Clone the repo
+1. Clone the repo:
 
     ```shell script
     git clone git@git.umms.med.umich.edu:ldmay/neuropsych-summary-scrape.git
@@ -45,28 +45,28 @@ python3 neuropsych_summary_scrape.py
 
 ## Script Procedure Description
 
-1. Get list of `os.DirEntry` objects for each valid "Neuropsych Summary Sheet" (`.xlsx` extension)
+1. Get list of `os.DirEntry` objects for each valid "Neuropsych Summary Sheet" (`.xlsx` extension).
 
-2. Load parse map that details how to extract data from Neuropsych Summary Sheets (`parse_map.json`)
+2. Load parse map that details how to extract data from Neuropsych Summary Sheets (`parse_map.json`).
 
-3. Build raw DataFrame from list of `os.DirEntry` objects
+3. Build raw DataFrame from list of `os.DirEntry` objects.
 
-4. Clean raw DataFrame
+4. Clean raw DataFrame.
 
-    a. Drop dud records (e.g., missing `redcap_event_name` or `form_date` values)
+    a. Drop dud records (e.g., missing `redcap_event_name` or `form_date` values).
    
-    b. Normalize IDs (e.g., 1234 => UM00001234)
+    b. Normalize IDs (e.g., 1234 => UM00001234).
      
-5. Transform clean DataFrame
+5. Transform clean DataFrame.
 
-    a. Reshape data for IVP & FVP NACC fields (e.g., `mocatots` => `fu_mocatots`)
+    a. Reshape data for IVP & FVP NACC fields (e.g., `mocatots` => `fu_mocatots`).
     
-6. Prevent premature record upload
+6. Prevent premature record upload.
 
-    a. Get completed-forms records from REDCap as DataFrame
+    a. Get completed-forms records from REDCap as DataFrame.
     
-    b. Inner join completed-forms DataFrame and transformed DataFrame on `ptid` and `redcap_event_name`
+    b. Inner join completed-forms DataFrame and transformed DataFrame on `ptid` and `redcap_event_name`.
     
-7. Write joined data to CSV for manual upload via REDCap web interface (TODO: Import records directly into REDCap via its API)
+7. Write joined data to CSV for manual upload via REDCap web interface (TODO: Import records directly into REDCap via its API).
 
-![Neuropsych summary sheets pipeline](resources/img/NeuropsychSummarySheets.svg "Neuropsych Summary Sheets Pipeline")
+![Neuropsych summary sheets pipeline](resources/img/Neuropsych_Summary_Scrape.svg "Neuropsych Summary Sheets Pipeline")
