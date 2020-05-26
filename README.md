@@ -36,10 +36,16 @@ Python 3.6 or higher is required.
 
 Everything should be preconfigured in the `config.cfg` and `.json` files.
 
-Simply run the script.
+Simply run the script:
 
 ```shell script
 python3 neuropsych_summary_scrape.py
+```
+
+Optionally, you can catch errors in a log file with Bash redirect:
+
+```shell script
+python3 neuropsych_summary_scrape.py 2>data/log/$(date +"%Y-%m-%d_%H-%M-%S").err
 ```
 
 
