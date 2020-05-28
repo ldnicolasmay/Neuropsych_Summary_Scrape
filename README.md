@@ -8,7 +8,7 @@ The purpose of this project is to scrape the data from "Neuropsych Summary Sheet
 
 Python 3.6 or higher is required.
 
-1. Clone the repo:
+1. Navigate to parent directory and clone the repo:
 
     ```shell script
     git clone git@git.umms.med.umich.edu:ldmay/neuropsych-summary-scrape.git
@@ -20,13 +20,25 @@ Python 3.6 or higher is required.
     cp config.cfg.template config.cfg
     ```
 
-3. Update `config.cfg` root path, regular expressions, and REDCap API credentials: 
+3. Update `config.cfg` Box JWT file path, Box root folder ID, regular expressions, and REDCap API credentials: 
 
     ```shell script
     vim config.cfg
     ```
+   
+4. Set up Python virtual environment (if necessary):
 
-4. Install necessary Python packages in your environment: 
+    ```shell script
+    python3 -m venv ./venv/
+    ```
+   
+5. Activate the Python virtual environment (if necessary):
+
+    ```shell script
+    source venv/bin/activate
+    ```
+
+6. Install necessary Python packages in your environment: 
 
     ```shell script
     python3 -m pip install -r requirements.txt
@@ -42,7 +54,7 @@ Simply run the script:
 python3 neuropsych_summary_scrape.py
 ```
 
-Optionally, you can catch errors in a log file with Bash redirect:
+Errors not thrown by the app will go to stderr. Optionally, you can catch errors in a log file with Bash redirect:
 
 ```shell script
 python3 neuropsych_summary_scrape.py 2>data/log/$(date +"%Y-%m-%d_%H-%M-%S").err
@@ -51,11 +63,11 @@ python3 neuropsych_summary_scrape.py 2>data/log/$(date +"%Y-%m-%d_%H-%M-%S").err
 
 ## Script Procedure Description
 
-1. Get list of `os.DirEntry` objects for each valid "Neuropsych Summary Sheet" (`.xlsx` extension).
+1. Get list of Box item objects for each valid "Neuropsych Summary Sheet" (`.xlsx` extension).
 
 2. Load parse map that details how to extract data from Neuropsych Summary Sheets (`parse_map.json`).
 
-3. Build raw DataFrame from list of `os.DirEntry` objects.
+3. Build raw DataFrame from list of Box item objects.
 
 4. Clean raw DataFrame.
 
@@ -73,6 +85,8 @@ python3 neuropsych_summary_scrape.py 2>data/log/$(date +"%Y-%m-%d_%H-%M-%S").err
     
     b. Inner join completed-forms DataFrame and transformed DataFrame on `ptid` and `redcap_event_name`.
     
-7. Write joined data to CSV for manual upload via REDCap web interface (TODO: Import records directly into REDCap via its API).
+7. Write joined data to CSV.
+
+8. Import records directly into REDCap via API.
 
 ![Neuropsych summary sheets pipeline](resources/img/Neuropsych_Summary_Scrape.svg "Neuropsych Summary Sheets Pipeline")

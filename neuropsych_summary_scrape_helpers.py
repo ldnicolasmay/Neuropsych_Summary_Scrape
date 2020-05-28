@@ -1,9 +1,31 @@
-# neuropsych_summary_scrape_helpers.py
-
 import logging
 import requests
 import pandas as pd
+import os
+import sys
 from re import match, search
+from datetime import datetime
+from boxsdk import JWTAuth, Client
+
+
+# Logging setup
+# create logger for this module; use name other than "logger" because Box SDK uses that name
+nssh_logger = logging.getLogger(__name__)
+nssh_logger.setLevel(logging.DEBUG)
+# create file handler which logs even debug messages
+fh = logging.FileHandler(f"data/log/{datetime.now().strftime('%Y-%m-%d_%H-%M')}.log")
+fh.setLevel(logging.INFO)
+# create console handler with a higher log level
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.WARNING)
+# create formatters and add them to the handlers
+fh_formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(message)s")
+ch_formatter = logging.Formatter("    %(levelname)s : %(message)s")
+fh.setFormatter(fh_formatter)
+ch.setFormatter(ch_formatter)
+# add the handlers to the logger
+nssh_logger.addHandler(fh)
+nssh_logger.addHandler(ch)
 
 
 def return_col_row_of_val(df_to_search, search_str):
@@ -49,12 +71,12 @@ def convert_x_to_dtype(raw_value, type_str, anchor, path):
         value = func(raw_value)
     except ValueError as e:
         value = None
-        logging.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
+        nssh_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
 
     return value
 
 
-def extract_dir_visit_num(dir_entry):
+def local_extract_dir_visit_num(dir_entry):
     """
 
     :param dir_entry:
@@ -66,12 +88,33 @@ def extract_dir_visit_num(dir_entry):
         visit_int = int(visit_str)
     except ValueError as e:
         visit_int = None
-        print(e)
+        nssh_logger.warning(e)
 
     return visit_int
 
 
-def extract_dir_ummap_id(dir_entry, electra_dir_entry):
+def box_extract_dir_visit_num(box_item):
+    """
+
+    :param box_item:
+    :return:
+    """
+    box_item_path = ""
+    for path_item in box_item.path_collection['entries']:
+        box_item_path += f"/{path_item.name}"
+
+    visit_match = search(r'.*Visit (\d+).*', box_item_path)
+    visit_str = visit_match.group(1)
+    try:
+        visit_int = int(visit_str)
+    except ValueError as e:
+        visit_int = None
+        nssh_logger.warning(e)
+
+    return visit_int
+
+
+def local_extract_dir_ummap_id(dir_entry, electra_dir_entry):
     """
 
     :param dir_entry:
@@ -85,7 +128,7 @@ def extract_dir_ummap_id(dir_entry, electra_dir_entry):
             id_int = int(id_str)
         except ValueError as e:
             id_int = None
-            logging.warning(e)
+            nssh_logger.warning(e)
     else:
         id_match = search(r'.*/KG\d{6} - (\d{4})/KG\d{6}_(\d{4}).*', dir_entry.path)
         id_str_1 = id_match.group(1)
@@ -96,9 +139,37 @@ def extract_dir_ummap_id(dir_entry, electra_dir_entry):
                 id_int = int(id_str)
             except ValueError as e:
                 id_int = None
-                logging.warning(e)
+                nssh_logger.warning(e)
         else:
             raise AssertionError(f"UMMAP IDs from {dir_entry.path} don't match")
+    ummap_id = normalize_ummap_id(id_int)
+
+    return ummap_id
+
+
+def box_extract_dir_ummap_id(box_item, electra_box_item):
+    """
+
+    :param box_item:
+    :param electra_box_item:
+    :return:
+    """
+    if not electra_box_item:
+        id_match = search(r'^(\d{3,4}).*[Ss]cor.*[Ss]ummary.*\d{4}.*\.xlsx$', box_item.name)
+        id_str = id_match.group(1)
+        try:
+            id_int = int(id_str)
+        except ValueError as e:
+            id_int = None
+            logging.warning(e)
+    else:
+        id_match = search(r'^KG\d{6}_(\d{4})_Score_Summary_\d{4}.xlsx$', box_item.name)
+        id_str = id_match.group(1)
+        try:
+            id_int = int(id_str)
+        except ValueError as e:
+            id_int = None
+            nssh_logger.warning(e)
     ummap_id = normalize_ummap_id(id_int)
 
     return ummap_id
@@ -130,7 +201,7 @@ def extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, el
     return redcap_event_name_str
 
 
-def build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
+def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
     """
     Build record row for dataframe of records for eventual REDCap import
 
@@ -152,15 +223,47 @@ def build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
             row_dict[raw_field] = value
 
     electra_dir_entry = True if match(".*ELECTRA.*", dir_entry.path) else False
-    dir_ummap_id = extract_dir_ummap_id(dir_entry, electra_dir_entry)
-    dir_visit_num = extract_dir_visit_num(dir_entry)
+    dir_ummap_id = local_extract_dir_ummap_id(dir_entry, electra_dir_entry)
+    dir_visit_num = local_extract_dir_visit_num(dir_entry)
     redcap_event_name = extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, electra_df)
+
     row_dict['redcap_event_name'] = redcap_event_name
 
     return row_dict
 
 
-def build_accum_df(dir_entries_list, parse_dict, electra_df):
+def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df):
+    """
+    Build record row for dataframe of records for eventual REDCap import
+
+    :param summ_sheet_df:
+    :param parse_dict:
+    :param box_item:
+    :param electra_df:
+    :return:
+    """
+    row_dict = {}
+    for raw_field, spec_dict in parse_dict.items():
+        row_idx, col_idx = return_col_row_of_val(summ_sheet_df, spec_dict['anchor'])
+        if row_idx is not None:
+            raw_value = summ_sheet_df.loc[row_idx + spec_dict['row_diff'], col_idx + spec_dict['col_diff']]
+            if pd.isna(raw_value) or raw_value.strip().upper() in ["", "NA", "N/A"]:
+                value = None
+            else:
+                value = convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], box_item.id)
+            row_dict[raw_field] = value
+
+    electra_box_item = True if match(r'^KG\d{6}_\d{4}_Score_Summary_\d{4}.xlsx$', box_item.name) else False
+    dir_ummap_id = box_extract_dir_ummap_id(box_item, electra_box_item)
+    dir_visit_num = box_extract_dir_visit_num(box_item)
+    redcap_event_name = extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_box_item, electra_df)
+
+    row_dict['redcap_event_name'] = redcap_event_name
+
+    return row_dict
+
+
+def local_build_accum_df(dir_entries_list, parse_dict, electra_df):
     """
     Build dataframe of records for eventual REDCap import
 
@@ -174,15 +277,44 @@ def build_accum_df(dir_entries_list, parse_dict, electra_df):
 
     # loop over summary sheet DirEntries and process
     for dir_entry in dir_entries_list:
+        print(f"  {dir_entry.name}")
         try:
             summ_sheet_df = pd.read_excel(dir_entry.path, sheet_name=0, header=None, dtype=str)
         except:
             summ_sheet_df = pd.DataFrame(data=None)
-            logging.warning(f"Cannot process \"{dir_entry.path}\"")
+            nssh_logger.warning(f"Cannot process \"{dir_entry.path}\"")
         if not summ_sheet_df.empty:
-            row_dict = build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df)
+            row_dict = local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df)
             accum_df = accum_df.append(row_dict, ignore_index=True)
-            logging.info(f"Processed \"{dir_entry.path}\"")
+            nssh_logger.info(f"Processed \"{dir_entry.path}\"")
+
+    return accum_df.dropna(axis="index", how="all")
+
+
+def box_build_accum_df(box_items_list, parse_dict, electra_df):
+    """
+    Build dataframe of records for eventual REDCap import
+
+    :param box_items_list:
+    :param parse_dict:
+    :param electra_df:
+    :return:
+    """
+    # build empty dataframe
+    accum_df = pd.DataFrame(data=None, index=None, columns=parse_dict.keys())
+
+    # loop over summary sheet DirEntries and process
+    for box_item in box_items_list:
+        print(f"  {box_item.name}")
+        try:
+            summ_sheet_df = pd.read_excel(box_item.content(), sheet_name=0, header=None, dtype=str)
+        except:
+            summ_sheet_df = pd.DataFrame(data=None)
+            nssh_logger.warning(f"Cannot process {box_item.id} with name \"{box_item.name}\"")
+        if not summ_sheet_df.empty:
+            row_dict = box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df)
+            accum_df = accum_df.append(row_dict, ignore_index=True)
+            nssh_logger.info(f"Processed {box_item.id} with name \"{box_item.name}\"")
 
     return accum_df.dropna(axis="index", how="all")
 
@@ -319,8 +451,40 @@ def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data
     }
     request_result = requests.post(redcap_api_uri, request_dict, verify=vp)
     if request_result.status_code == 200:
-        logging.info(f"REDCap Import - Imported {request_result.json()['count']} records")
+        nssh_logger.info(f"REDCap Import - Imported {request_result.json()['count']} records")
     elif request_result.status_code == 400:
-        logging.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
+        nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
     else:
-        logging.error(f"REDCap Error - {request_result.reason} - {request_result.content}")
+        nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.content}")
+
+
+########################
+# Box Client Functions #
+
+def get_box_authenticated_client(box_json_config_path):
+    """
+    Get an authenticated Box client for a JWT service account
+
+    :param box_json_config_path:
+    :return:
+    """
+    if not os.path.isfile(box_json_config_path):
+        raise ValueError("`box_json_config_path` must be a path to the JSON config file for your Box JWT app")
+    auth = JWTAuth.from_settings_file(box_json_config_path)
+    auth.authenticate_instance()
+    return Client(auth)
+
+
+def get_box_subitems(box_client, box_folder, fields):
+    """
+    Get a collection of all immediate folder items
+
+    :param box_client:
+    :param box_folder:
+    :param fields:
+    """
+    items = []
+    # fetch folder items and add subfolders to list
+    for item in box_client.folder(folder_id=box_folder['id']).get_items(fields=fields):
+        items.append(item)
+    return items
