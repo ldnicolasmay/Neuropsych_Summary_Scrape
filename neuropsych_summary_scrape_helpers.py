@@ -1,3 +1,4 @@
+import configparser
 import logging
 import requests
 import pandas as pd
@@ -8,12 +9,17 @@ from datetime import datetime
 from boxsdk import JWTAuth, Client
 
 
+# Read config
+config = configparser.ConfigParser()
+config.read("resources/config/config.cfg")
+app_path = config.get('base', 'app_path')
+
 # Logging setup
 # create logger for this module; use name other than "logger" because Box SDK uses that name
 nssh_logger = logging.getLogger(__name__)
 nssh_logger.setLevel(logging.DEBUG)
 # create file handler which logs even debug messages
-fh = logging.FileHandler(f"data/log/{datetime.now().strftime('%Y-%m-%d_%H-%M')}.log")
+fh = logging.FileHandler(f"{app_path}/data/log/{datetime.now().strftime('%Y-%m-%d_%H-%M')}.log")
 fh.setLevel(logging.INFO)
 # create console handler with a higher log level
 ch = logging.StreamHandler(sys.stdout)
