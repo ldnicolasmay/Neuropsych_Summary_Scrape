@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
 # Import modules
+import argparse
+import inspect
 import configparser
 import json
 import os
@@ -14,15 +16,48 @@ from neuropsych_summary_scrape_helpers import *
 
 def main():
 
+    # Get app path from where this file sits
+    filename = inspect.getframeinfo(inspect.currentframe()).filename
+    app_path = os.path.dirname(os.path.abspath(filename))
+
+    # Parse args
+    print("Parsing args...")
+
+    def str2bool(val):
+        if isinstance(val, bool):
+            return val
+        elif val.lower() in ('yes', 'true', 't', 'y', '1'):
+            return True
+        elif val.lower() in ('no', 'false', 'f', 'n', '0'):
+            return False
+        else:
+            raise argparse.ArgumentTypeError('Boolean value expected.')
+
+    parser = argparse.ArgumentParser(description="Scrape Neuropsych Summary Sheets from Box for REDCap import.")
+    parser.add_argument('-a', '--app_path', required=False,
+                        help=f"required: " +
+                             f"absolute path to local directory containing app")
+    parser.add_argument('-v', '--verbose',
+                        type=str2bool, nargs='?', const=True, default=False,
+                        help=f"print actions to stdout")
+    args = parser.parse_args()
+    if args.app_path:
+        app_path = args.app_path
+    is_verbose = args.verbose
+
     # Read config
     print("Parsing config file...")
     config = configparser.ConfigParser()
-    config.read("resources/config/config.cfg")
+    config.read(f"{app_path}/resources/config/config.cfg")
     box_json_config_path = config.get('base', 'box_json_config_path')
     box_folder_id = config.get('base', 'box_folder_id')
     config_iter_sections = [section for section in config.sections() if section != 'base']
     subdirs_regex_list = [config.get(section, 'subdirs_regex') for section in config_iter_sections]
     xlsx_regex_list = [config.get(section, 'xlsx_regex') for section in config_iter_sections]
+
+    # Get logger
+    print("Retrieving logger...")
+    nss_logger = get_logger(app_path)
 
     # Join and compile config regexes
     print("Processing regexes...")
@@ -33,7 +68,7 @@ def main():
 
     # Preload DataFrames from REDCap for studies
     print("Retrieving REDCap data...")
-    with open("resources/json/redcap_fields.json", "r") as redcap_fields_file:
+    with open(f"{app_path}/resources/json/redcap_fields.json", "r") as redcap_fields_file:
         redcap_fields_data = redcap_fields_file.read()
     redcap_fields_dict = json.loads(redcap_fields_data)
     ummap_redcap_fields = redcap_fields_dict['ummap']
@@ -46,7 +81,7 @@ def main():
                                            electra_redcap_fields)
 
     # Load parse map json file as dict
-    with open("resources/json/parse_map.json", "r") as parse_map_file:
+    with open(f"{app_path}/resources/json/parse_map.json", "r") as parse_map_file:
         parse_map_json_data = parse_map_file.read()
     parse_map_dict = json.loads(parse_map_json_data)
 
@@ -65,7 +100,7 @@ def main():
 
     # Loop over summary sheet DirEntries and process
     print("Building raw dataframe...")
-    raw_df = box_build_accum_df(summ_sheet_box_items_list, parse_map_dict, electra_df)
+    raw_df = box_build_accum_df(summ_sheet_box_items_list, parse_map_dict, electra_df, nss_logger)
 
     # Normalize UMMAP IDs
     print("Cleaning dataframe...")
@@ -81,7 +116,7 @@ def main():
 
     # Add "fu_" prefix to NACC columns for follow-up visits
     print("Transforming dataframe...")
-    with open("resources/json/nacc_fields.json", "r") as nacc_fields_json_file:
+    with open(f"{app_path}/resources/json/nacc_fields.json", "r") as nacc_fields_json_file:
         nacc_fields_json_data = nacc_fields_json_file.read()
     nacc_fields_dict = json.loads(nacc_fields_json_data)
     nacc_cols = nacc_fields_dict['nacc_cols']
@@ -105,7 +140,7 @@ def main():
 
     # Write dataframe to CSV
     print("Writing CSV to file...")
-    importable_csv_path = "data/csv"
+    importable_csv_path = f"{app_path}/data/csv"
     importable_csv_filename = f"neuropsych_scrape_data-{date.today().isoformat()}.csv"
     importable_df.to_csv(f"{importable_csv_path}/{importable_csv_filename}", index=False)
 
@@ -115,7 +150,7 @@ def main():
         importable_csv_data = importable_csv_data_file.read()
         import_redcap_data(config.get('ummap', 'redcap_api_uri'),
                            config.get('ummap', 'redcap_project_token'),
-                           importable_csv_data, vp=False)
+                           importable_csv_data, nss_logger, vp=False)
 
     print("Done.")
 
