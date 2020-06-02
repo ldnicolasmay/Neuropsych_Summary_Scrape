@@ -9,29 +9,32 @@ from datetime import datetime
 from boxsdk import JWTAuth, Client
 
 
-# Read config
-config = configparser.ConfigParser()
-config.read("resources/config/config.cfg")
-app_path = config.get('base', 'app_path')
+def get_logger(app_path):
+    """
+    Get a Logger object for passing to helper functions
 
-# Logging setup
-# create logger for this module; use name other than "logger" because Box SDK uses that name
-nssh_logger = logging.getLogger(__name__)
-nssh_logger.setLevel(logging.DEBUG)
-# create file handler which logs even debug messages
-fh = logging.FileHandler(f"{app_path}/data/log/{datetime.now().strftime('%Y-%m-%d_%H-%M')}.log")
-fh.setLevel(logging.INFO)
-# create console handler with a higher log level
-ch = logging.StreamHandler(sys.stdout)
-ch.setLevel(logging.WARNING)
-# create formatters and add them to the handlers
-fh_formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(message)s")
-ch_formatter = logging.Formatter("    %(levelname)s : %(message)s")
-fh.setFormatter(fh_formatter)
-ch.setFormatter(ch_formatter)
-# add the handlers to the logger
-nssh_logger.addHandler(fh)
-nssh_logger.addHandler(ch)
+    :param app_path:
+    :return:
+    """
+    # create logger for this module; use name other than "logger" because Box SDK uses that name
+    nss_logger = logging.getLogger("neuropsych_summary_scrape")
+    nss_logger.setLevel(logging.DEBUG)
+    # create file handler which logs even debug messages
+    fh = logging.FileHandler(f"{app_path}/data/log/{datetime.now().strftime('%Y-%m-%d_%H-%M')}.log")
+    fh.setLevel(logging.INFO)
+    # create console handler with a higher log level
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.WARNING)
+    # create formatters and add them to the handlers
+    fh_formatter = logging.Formatter("%(asctime)s : %(levelname)s : %(message)s")
+    ch_formatter = logging.Formatter("    %(levelname)s : %(message)s")
+    fh.setFormatter(fh_formatter)
+    ch.setFormatter(ch_formatter)
+    # add the handlers to the logger
+    nss_logger.addHandler(fh)
+    nss_logger.addHandler(ch)
+
+    return nss_logger
 
 
 def return_col_row_of_val(df_to_search, search_str):
@@ -53,13 +56,14 @@ def return_col_row_of_val(df_to_search, search_str):
     return None, None
 
 
-def convert_x_to_dtype(raw_value, type_str, anchor, path):
+def convert_x_to_dtype(raw_value, type_str, anchor, path, nss_logger):
     """
 
     :param raw_value:
     :param type_str:
     :param anchor:
     :param path:
+    :param nss_logger:
     :return:
     """
     # Determine coercion function
@@ -77,15 +81,17 @@ def convert_x_to_dtype(raw_value, type_str, anchor, path):
         value = func(raw_value)
     except ValueError as e:
         value = None
-        nssh_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
+        # nssh_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
+        nss_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
 
     return value
 
 
-def local_extract_dir_visit_num(dir_entry):
+def local_extract_dir_visit_num(dir_entry, nss_logger):
     """
 
     :param dir_entry:
+    :param nss_logger:
     :return:
     """
     visit_match = search(r'.*Visit (\d+).*', dir_entry.path)
@@ -94,15 +100,17 @@ def local_extract_dir_visit_num(dir_entry):
         visit_int = int(visit_str)
     except ValueError as e:
         visit_int = None
-        nssh_logger.warning(e)
+        # nssh_logger.warning(e)
+        nss_logger.warning(e)
 
     return visit_int
 
 
-def box_extract_dir_visit_num(box_item):
+def box_extract_dir_visit_num(box_item, nss_logger):
     """
 
     :param box_item:
+    :param nss_logger:
     :return:
     """
     box_item_path = ""
@@ -115,16 +123,18 @@ def box_extract_dir_visit_num(box_item):
         visit_int = int(visit_str)
     except ValueError as e:
         visit_int = None
-        nssh_logger.warning(e)
+        # nssh_logger.warning(e)
+        nss_logger.warning(e)
 
     return visit_int
 
 
-def local_extract_dir_ummap_id(dir_entry, electra_dir_entry):
+def local_extract_dir_ummap_id(dir_entry, electra_dir_entry, nss_logger):
     """
 
     :param dir_entry:
     :param electra_dir_entry:
+    :param nss_logger:
     :return:
     """
     if not electra_dir_entry:
@@ -134,7 +144,8 @@ def local_extract_dir_ummap_id(dir_entry, electra_dir_entry):
             id_int = int(id_str)
         except ValueError as e:
             id_int = None
-            nssh_logger.warning(e)
+            # nssh_logger.warning(e)
+            nss_logger.warning(e)
     else:
         id_match = search(r'.*/KG\d{6} - (\d{4})/KG\d{6}_(\d{4}).*', dir_entry.path)
         id_str_1 = id_match.group(1)
@@ -145,7 +156,8 @@ def local_extract_dir_ummap_id(dir_entry, electra_dir_entry):
                 id_int = int(id_str)
             except ValueError as e:
                 id_int = None
-                nssh_logger.warning(e)
+                # nssh_logger.warning(e)
+                nss_logger.warning(e)
         else:
             raise AssertionError(f"UMMAP IDs from {dir_entry.path} don't match")
     ummap_id = normalize_ummap_id(id_int)
@@ -153,11 +165,12 @@ def local_extract_dir_ummap_id(dir_entry, electra_dir_entry):
     return ummap_id
 
 
-def box_extract_dir_ummap_id(box_item, electra_box_item):
+def box_extract_dir_ummap_id(box_item, electra_box_item, nss_logger):
     """
 
     :param box_item:
     :param electra_box_item:
+    :param nss_logger:
     :return:
     """
     if not electra_box_item:
@@ -175,7 +188,8 @@ def box_extract_dir_ummap_id(box_item, electra_box_item):
             id_int = int(id_str)
         except ValueError as e:
             id_int = None
-            nssh_logger.warning(e)
+            # nssh_logger.warning(e)
+            nss_logger.warning(e)
     ummap_id = normalize_ummap_id(id_int)
 
     return ummap_id
@@ -207,7 +221,7 @@ def extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, el
     return redcap_event_name_str
 
 
-def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
+def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df, nss_logger):
     """
     Build record row for dataframe of records for eventual REDCap import
 
@@ -215,6 +229,7 @@ def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
     :param parse_dict:
     :param dir_entry:
     :param electra_df:
+    :param nss_logger:
     :return:
     """
     row_dict = {}
@@ -225,12 +240,13 @@ def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
             if pd.isna(raw_value) or raw_value.strip().upper() in ["", "NA", "N/A"]:
                 value = None
             else:
-                value = convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], dir_entry.path)
+                value = \
+                    convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], dir_entry.path, nss_logger)
             row_dict[raw_field] = value
 
     electra_dir_entry = True if match(".*ELECTRA.*", dir_entry.path) else False
-    dir_ummap_id = local_extract_dir_ummap_id(dir_entry, electra_dir_entry)
-    dir_visit_num = local_extract_dir_visit_num(dir_entry)
+    dir_ummap_id = local_extract_dir_ummap_id(dir_entry, electra_dir_entry, nss_logger)
+    dir_visit_num = local_extract_dir_visit_num(dir_entry, nss_logger)
     redcap_event_name = extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_dir_entry, electra_df)
 
     row_dict['redcap_event_name'] = redcap_event_name
@@ -238,7 +254,7 @@ def local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df):
     return row_dict
 
 
-def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df):
+def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df, nss_logger):
     """
     Build record row for dataframe of records for eventual REDCap import
 
@@ -246,6 +262,7 @@ def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df):
     :param parse_dict:
     :param box_item:
     :param electra_df:
+    :param nss_logger:
     :return:
     """
     row_dict = {}
@@ -256,12 +273,13 @@ def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df):
             if pd.isna(raw_value) or raw_value.strip().upper() in ["", "NA", "N/A"]:
                 value = None
             else:
-                value = convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], box_item.id)
+                value = \
+                    convert_x_to_dtype(raw_value, spec_dict['dtype'], spec_dict['anchor'], box_item.id, nss_logger)
             row_dict[raw_field] = value
 
     electra_box_item = True if match(r'^KG\d{6}_\d{4}_Score_Summary_\d{4}.xlsx$', box_item.name) else False
-    dir_ummap_id = box_extract_dir_ummap_id(box_item, electra_box_item)
-    dir_visit_num = box_extract_dir_visit_num(box_item)
+    dir_ummap_id = box_extract_dir_ummap_id(box_item, electra_box_item, nss_logger)
+    dir_visit_num = box_extract_dir_visit_num(box_item, nss_logger)
     redcap_event_name = extract_redcap_event_name(dir_ummap_id, dir_visit_num, electra_box_item, electra_df)
 
     row_dict['redcap_event_name'] = redcap_event_name
@@ -269,13 +287,14 @@ def box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df):
     return row_dict
 
 
-def local_build_accum_df(dir_entries_list, parse_dict, electra_df):
+def local_build_accum_df(dir_entries_list, parse_dict, electra_df, nss_logger):
     """
     Build dataframe of records for eventual REDCap import
 
     :param dir_entries_list:
     :param parse_dict:
     :param electra_df:
+    :param nss_logger:
     :return:
     """
     # build empty dataframe
@@ -288,22 +307,25 @@ def local_build_accum_df(dir_entries_list, parse_dict, electra_df):
             summ_sheet_df = pd.read_excel(dir_entry.path, sheet_name=0, header=None, dtype=str)
         except:
             summ_sheet_df = pd.DataFrame(data=None)
-            nssh_logger.warning(f"Cannot process \"{dir_entry.path}\"")
+            # nssh_logger.warning(f"Cannot process \"{dir_entry.path}\"")
+            nss_logger.warning(f"Cannot process \"{dir_entry.path}\"")
         if not summ_sheet_df.empty:
-            row_dict = local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df)
+            row_dict = local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df, nss_logger)
             accum_df = accum_df.append(row_dict, ignore_index=True)
-            nssh_logger.info(f"Processed \"{dir_entry.path}\"")
+            # nssh_logger.info(f"Processed \"{dir_entry.path}\"")
+            nss_logger.info(f"Processed \"{dir_entry.path}\"")
 
     return accum_df.dropna(axis="index", how="all")
 
 
-def box_build_accum_df(box_items_list, parse_dict, electra_df):
+def box_build_accum_df(box_items_list, parse_dict, electra_df, nss_logger):
     """
     Build dataframe of records for eventual REDCap import
 
     :param box_items_list:
     :param parse_dict:
     :param electra_df:
+    :param nss_logger:
     :return:
     """
     # build empty dataframe
@@ -316,11 +338,13 @@ def box_build_accum_df(box_items_list, parse_dict, electra_df):
             summ_sheet_df = pd.read_excel(box_item.content(), sheet_name=0, header=None, dtype=str)
         except:
             summ_sheet_df = pd.DataFrame(data=None)
-            nssh_logger.warning(f"Cannot process {box_item.id} with name \"{box_item.name}\"")
+            # nssh_logger.warning(f"Cannot process {box_item.id} with name \"{box_item.name}\"")
+            nss_logger.warning(f"Cannot process {box_item.id} with name \"{box_item.name}\"")
         if not summ_sheet_df.empty:
-            row_dict = box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df)
+            row_dict = box_build_accum_row(summ_sheet_df, parse_dict, box_item, electra_df, nss_logger)
             accum_df = accum_df.append(row_dict, ignore_index=True)
-            nssh_logger.info(f"Processed {box_item.id} with name \"{box_item.name}\"")
+            # nssh_logger.info(f"Processed {box_item.id} with name \"{box_item.name}\"")
+            nss_logger.info(f"Processed {box_item.id} with name \"{box_item.name}\"")
 
     return accum_df.dropna(axis="index", how="all")
 
@@ -437,12 +461,13 @@ def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, 
     return df_cln
 
 
-def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data, vp=True):
+def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data, nss_logger, vp=True):
     """
 
     :param redcap_api_uri:
     :param redcap_project_token:
     :param importable_csv_data:
+    :param nss_logger:
     :param vp:
     """
     request_dict = {
@@ -457,11 +482,14 @@ def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data
     }
     request_result = requests.post(redcap_api_uri, request_dict, verify=vp)
     if request_result.status_code == 200:
-        nssh_logger.info(f"REDCap Import - Imported {request_result.json()['count']} records")
+        # nssh_logger.info(f"REDCap Import - Imported {request_result.json()['count']} records")
+        nss_logger.info(f"REDCap Import - Imported {request_result.json()['count']} records")
     elif request_result.status_code == 400:
-        nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
+        # nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
+        nss_logger.error(f"REDCap Error - {request_result.reason} - {request_result.json()['error']}")
     else:
-        nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.content}")
+        # nssh_logger.error(f"REDCap Error - {request_result.reason} - {request_result.content}")
+        nss_logger.error(f"REDCap Error - {request_result.reason} - {request_result.content}")
 
 
 ########################
