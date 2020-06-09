@@ -49,7 +49,7 @@ def main():
     print("Parsing config file...")
     config = configparser.ConfigParser()
     config.read(f"{app_path}/resources/config/config.cfg")
-    box_json_config_path = config.get('base', 'box_json_config_path')
+    box_jwt_json_config_path = config.get('base', 'box_jwt_json_config_path')
     box_folder_id = config.get('base', 'box_folder_id')
     config_iter_sections = [section for section in config.sections() if section != 'base']
     subdirs_regex_list = [config.get(section, 'subdirs_regex') for section in config_iter_sections]
@@ -87,7 +87,7 @@ def main():
 
     # Get authenticated Box client; get root Box folder
     print("Authenticating Box client...")
-    box_client = get_box_authenticated_client(box_json_config_path)
+    box_client = get_box_authenticated_client(box_jwt_json_config_path)
     root_box_dir = box_client.folder(folder_id=box_folder_id).get()
 
     # Get list of summary sheet Box subitems

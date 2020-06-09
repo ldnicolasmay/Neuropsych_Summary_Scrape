@@ -1,8 +1,8 @@
 [base]
 # Set the path to your Box JWT config JSON file here
-box_json_config_path=/path/to/box_jwt_config.json
+box_jwt_json_config_path=/path/to/box_jwt_config.json
 # Set the ID of the root folder in common above all Neuropsych summary sheets to scrape
-box_folder_id=84362129178
+box_folder_id=12345678910
 
 [ummap]
 subdirs_regex=^Clinical Core$|^Scoring \& Report Materials$|^Active Neuropsych Summaries$|^Visit \d.*$
