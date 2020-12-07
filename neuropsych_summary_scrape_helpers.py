@@ -92,7 +92,7 @@ def convert_x_to_dtype(raw_value, type_str, anchor, path, nss_logger):
         value = func(raw_value)
     except ValueError as e:
         value = None
-        nss_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {path}; {e}")
+        nss_logger.warning(f"Raw value in sheet not compatible with defined dtype at {anchor} in {str(path)}; {e}")
 
     return value
 
@@ -324,11 +324,11 @@ def local_build_accum_df(dir_entries_list, parse_dict, electra_df, nss_logger):
             summ_sheet_df = pd.read_excel(dir_entry.path, sheet_name=0, header=None, dtype=str)
         except:
             summ_sheet_df = pd.DataFrame(data=None)
-            nss_logger.warning(f"Cannot process \"{dir_entry.path}\"")
+            nss_logger.warning(f"Cannot process \"{str(dir_entry.path)}\"")
         if not summ_sheet_df.empty:
             row_dict = local_build_accum_row(summ_sheet_df, parse_dict, dir_entry, electra_df, nss_logger)
             accum_df = accum_df.append(row_dict, ignore_index=True)
-            nss_logger.info(f"Processed \"{dir_entry.path}\"")
+            nss_logger.info(f"Processed \"{str(dir_entry.path)}\"")
 
     return accum_df.dropna(axis="index", how="all")
 
@@ -390,9 +390,15 @@ def add_prefix_to_fu_visits(df, cols, prefix):
     :return:
     """
     df = df.copy(deep=True)
+
     for col in cols:
-        df[prefix + col] = df.loc[df.redcap_event_name != "visit_1_arm_1", col]
-        df[col] = df.loc[df.redcap_event_name == "visit_1_arm_1", col]
+        if prefix == "fu_" and not df[col].isnull().all():
+            df.loc[df['visit_type'].eq("IF"), prefix + col] = df.loc[df['visit_type'].eq("IF"), col]
+            df.loc[df['visit_type'].eq("IF"), col] = pd.NA  # None, pd.NA, np.nan
+        elif prefix == "tele_" and not df[col].isnull().all():
+            df.loc[df['visit_type'].eq("TF"), prefix + col] = df.loc[df['visit_type'].eq("TF"), col]
+            df.loc[df['visit_type'].eq("TF"), col] = pd.NA  # None, pd.NA, np.nan
+
     return df
 
 
@@ -441,14 +447,40 @@ def get_fvp_complete(df):
     return fvp_complete
 
 
-def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, vp=True):
+def get_tvp_complete(df):
     """
 
-    :param redcap_api_uri:
-    :param redcap_project_token:
-    :param fields_raw:
-    :param vp:
+    :param df:
     :return:
+    """
+    tvp_complete = (df.tvp_t1_complete == "2") & \
+                   (df.tvp_a1_complete == "2") & \
+                   (df.tvp_a2_complete == "2") & \
+                   (df.tvp_a3_complete == "2") & \
+                   (df.tvp_a4_complete == "2") & \
+                   (df.tvp_b4_complete == "2") & \
+                   (df.tvp_b5_complete == "2") & \
+                   (df.tvp_b7_complete == "2") & \
+                   (df.tvp_b9_complete == "2") & \
+                   (df.tvp_d1_complete == "2") & \
+                   (df.tvp_d2_complete == "2")
+    return tvp_complete
+
+
+def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, vp=True):
+    """
+    Retrieve data via REDCap as a pandas DataFrame
+
+    :param redcap_api_uri: URI of REDCap instance
+    :type redcap_api_uri: str
+    :param redcap_project_token: Token of REDCap project to pull data from
+    :type redcap_project_token: str
+    :param fields_raw: List of fields to retrieve
+    :type fields_raw: list[str]
+    :param vp: Verify peer flag
+    :type vp: bool
+    :return: DataFrame of REDCap data
+    :rtype: pandas.DataFrame
     """
     fields = ",".join(fields_raw)
     # get data
@@ -469,13 +501,13 @@ def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, 
     r = requests.post(redcap_api_uri, request_dict, verify=vp)
     df_raw = pd.DataFrame.from_dict(r.json())
 
-    df_cln = df_raw[df_raw.ptid.str.match(r'^UM\d{8}$') &
+    df_clean = df_raw[df_raw.ptid.str.match(r'^UM\d{8}$') &
                     (df_raw.redcap_event_name.str.match(r'^visit_\d+_arm_1$') |
                      df_raw.redcap_event_name.str.match(r'^sv\d+_arm_1$')) &
                     pd.notna(df_raw.form_date) &
                     (df_raw.form_date != "")]
 
-    return df_cln
+    return df_clean
 
 
 def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data, nss_logger, vp=True):
