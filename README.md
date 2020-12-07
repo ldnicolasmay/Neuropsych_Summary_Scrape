@@ -45,17 +45,23 @@ Python 3.6 or higher is required.
     ```shell script
     git clone git@git.umms.med.umich.edu:ldmay/neuropsych-summary-scrape.git
     ```
-
-2. Copy `config.cfg.template` to `config.cfg`:
+   
+2. `cd` into the `neuropsych-summary-scrape` directory:
 
     ```shell script
-    cp config.cfg.template config.cfg
+    cd neuropsych-summary-scrape
+    ```
+
+3. Copy `config.cfg.template` to `config.cfg`:
+
+    ```shell script
+    cp resources/config/config.cfg.template resources/config/config.cfg
     ```
 
 3. Update `config.cfg` Box JWT file path, Box root folder ID, regular expressions, and REDCap API credentials: 
 
     ```shell script
-    vim config.cfg
+    vim resources/config/config.cfg
     ```
    
 4. Set up Python virtual environment (if necessary):
