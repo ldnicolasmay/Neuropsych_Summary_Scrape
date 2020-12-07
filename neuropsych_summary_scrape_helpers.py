@@ -512,6 +512,7 @@ def retrieve_redcap_dataframe(redcap_api_uri, redcap_project_token, fields_raw, 
 
 def import_redcap_data(redcap_api_uri, redcap_project_token, importable_csv_data, nss_logger, vp=True):
     """
+    Import data via REDCap API
 
     :param redcap_api_uri:
     :param redcap_project_token:
